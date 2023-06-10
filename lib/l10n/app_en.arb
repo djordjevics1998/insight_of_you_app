@@ -1,0 +1,13 @@
+{
+    "app_title": "Insight of you",
+    "web_enable_audio_video": "To play this web app you need to consent to play audio/video",
+    "consent": "I consent, let me through!",
+    "over18_warning": "This game is 18+ only!",
+    "over18_question": "Are you old enough?!",
+    "over18_yes": "Yes, Ma'am, I am old enough!",
+    "over18_no": "No, no, no! Get me out!",
+    "not_over_18": "CLOSE THIS APP AND GROW UP",
+    "start": "Start",
+    "load": "Load",
+    "fullscreen": "Fullscreen"
+}
