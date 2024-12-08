@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:insight_of_you_app/gen/fonts.gen.dart';
 import 'package:insight_of_you_app/pages/home.dart';
+import 'package:media_kit/media_kit.dart';
 
 import 'generated/app_localizations.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Necessary initialization for package:media_kit.
+  MediaKit.ensureInitialized();
   runApp(const MyApp());
 }
 

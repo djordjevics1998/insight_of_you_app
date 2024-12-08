@@ -3,7 +3,8 @@ import 'dart:html';
 import 'package:flutter/material.dart';
 import 'package:insight_of_you_app/gen/assets.gen.dart';
 import 'package:insight_of_you_app/generated/app_localizations.dart';
-import 'package:video_player/video_player.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 
 class MainMenuPage extends StatefulWidget {
   const MainMenuPage({super.key});
@@ -13,9 +14,18 @@ class MainMenuPage extends StatefulWidget {
 }
 
 class _MainMenuPageState extends State<MainMenuPage> {
-  late final List<VideoPlayerController> _controllers;
+  late final List<VideoController> _controllers;
   late final List<AssetGenImage> displayIcons, displayFocusIcons;
   late int displayInd;
+  double _aspectRatio = 1;
+  double get aspectRatio => _aspectRatio;
+  set aspectRatio(double val) {
+    if(val != _aspectRatio) {
+      setState(() {
+        _aspectRatio = val;
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -66,23 +76,21 @@ class _MainMenuPageState extends State<MainMenuPage> {
       InsightOfYouAssets.images.ch13Mm2,
     ];
     displayInd = 0;
-    _controllers = List<VideoPlayerController>.empty(growable: true);
+    _controllers = List<VideoController>.empty(growable: true);
     int l = 0;
     for (var displayPath in displayPaths) {
       final ind = l;
-      _controllers.add(VideoPlayerController.asset(
-        displayPath,
-      ));
+      final player = Player();
+      player.stream.width.listen((v) {
+        if(ind != displayInd) return;
+        aspectRatio = (player.state.width ?? 1) / (player.state.height ?? 1);
+      });
+      player.open(Media('asset://$displayPath',), play: false);
+      _controllers.add(VideoController(player, ));
       if (ind == displayInd) {
-        _controllers[displayInd].initialize().then((_) {
-          // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
-          //_controller.setVolume(0);
-          if (displayInd == ind) {
-            _controllers[displayInd].setLooping(true);
-            _controllers[displayInd].play();
-            setState(() {});
-          }
-        });
+        //_controllers[displayInd].
+        _controllers[displayInd].player.setPlaylistMode(PlaylistMode.loop);
+        _controllers[displayInd].player.play();
       }
       l++;
     }
@@ -91,16 +99,15 @@ class _MainMenuPageState extends State<MainMenuPage> {
   @override
   Widget build(BuildContext context) {
     final controller = _controllers[displayInd];
+
     return Center(
-        child: AspectRatio(
-      aspectRatio:
-          !controller.value.isInitialized || controller.value.aspectRatio <= 1.0
-              ? 16.0 / 9.0
-              : controller.value.aspectRatio,
-      child: Stack(
+      child: AspectRatio(aspectRatio: aspectRatio, child: Stack(
         children: [
-          VideoPlayer(controller),
-          Row(
+          Video(controller: controller, controls: NoVideoControls, ),
+      Positioned(top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0, child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Flexible(
@@ -230,32 +237,16 @@ class _MainMenuPageState extends State<MainMenuPage> {
                                             if (displayInd == ind) return;
                                             setState(() {
                                               if (_controllers[displayInd]
-                                                  .value
-                                                  .isInitialized)
+                                                  .player
+                                                  .state.playing)
                                                 _controllers[displayInd]
-                                                    .pause();
+                                                    .player.pause();
                                               displayInd = ind;
-                                              if (_controllers[displayInd]
-                                                  .value
-                                                  .isInitialized) {
+                                              setState(() {
                                                 _controllers[displayInd]
-                                                    .setLooping(true);
-                                                _controllers[displayInd].play();
-                                              } else {
-                                                _controllers[displayInd]
-                                                    .initialize()
-                                                    .then((_) {
-                                                  // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
-                                                  //_controller.setVolume(0);
-                                                  if (displayInd == ind) {
-                                                    _controllers[displayInd]
-                                                        .setLooping(true);
-                                                    _controllers[displayInd]
-                                                        .play();
-                                                    setState(() {});
-                                                  }
-                                                });
-                                              }
+                                                    .player.setPlaylistMode(PlaylistMode.loop);
+                                                _controllers[displayInd].player.play();
+                                              });
                                             });
                                           },
                                           child: e.image())))
@@ -271,16 +262,16 @@ class _MainMenuPageState extends State<MainMenuPage> {
               ),
               const Spacer(),
             ],
-          ),
+          ),),
         ],
-      ),
-    ));
+      ),),
+    );
   }
 
   @override
   void dispose() {
     for (var controller in _controllers) {
-      controller.dispose();
+      controller.player.dispose();
     }
     super.dispose();
   }
